@@ -23,81 +23,53 @@ const AuthPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    // Basic validation
+  
+    // Basic client-side validations (you may leave these as is)
     if (!isLogin && !name.trim()) {
       setError('Please enter your name');
       setLoading(false);
       return;
     }
-
     if (!email.trim()) {
       setError('Please enter your email');
       setLoading(false);
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       setLoading(false);
       return;
     }
-
+  
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (isLogin) {
-        // Simulate login check
-        // In a real app, this would be an API call to validate credentials
-        const fakeUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const user = fakeUsers.find(u => 
-          u.email.toLowerCase() === email.toLowerCase() && u.password === password
-        );
-        
-        if (!user) {
-          throw new Error('Invalid email or password');
-        }
-        
-        // Store logged in user data in localStorage (excluding password)
-        const { password: _, ...userData } = user;
-        localStorage.setItem('user', JSON.stringify(userData));
-      } else {
-        // Simulate registration
-        // In a real app, this would be an API call to create a user
-        const fakeUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        
-        // Check if email already exists
-        if (fakeUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-          throw new Error('Email already in use');
-        }
-        
-        // Create new user
-        const newUser = {
-          id: Date.now().toString(),
-          name: name.trim(),
-          email: email.trim(),
-          password: password,
-          createdAt: new Date().toISOString()
-        };
-        
-        // Save to fake DB
-        fakeUsers.push(newUser);
-        localStorage.setItem('users', JSON.stringify(fakeUsers));
-        
-        // Store logged in user data in localStorage (excluding password)
-        const { password: _, ...userData } = newUser;
-        localStorage.setItem('user', JSON.stringify(userData));
+      const endpoint = isLogin
+        ? 'http://localhost:5001/api/auth/login'
+        : 'http://localhost:5001/api/auth/register';
+      const payload = { email, password };
+      if (!isLogin) payload.name = name;
+  
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || 'Authentication failed. Please check your credentials.');
       }
-
-      // Redirect to dashboard
+  
+      // Optionally, store the token if you plan to secure other API endpoints
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+  
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Authentication failed. Please check your credentials.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const switchMode = () => {
     setIsLogin(!isLogin);
