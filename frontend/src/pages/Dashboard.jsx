@@ -1,41 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Plus, Filter, Home, PieChart, Download, ArrowUp, ArrowDown, Calendar, Search } from 'lucide-react';
+import { LogOut, Plus, Filter, Home, PieChart, Download, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import AddExpenseForm from '../components/AddExpenseForm';
+import AddIncomeForm from '../components/AddIncomeForm';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddExpense, setShowAddExpense] = useState(false);
-  const [sortField, setSortField] = useState('date');
-  const [sortDirection, setSortDirection] = useState('desc');
-  const [activeView, setActiveView] = useState('expenses'); // 'expenses' or 'visualizations'
-  
-  // Filters
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo] = useState('');
-  const [filterMinAmount, setFilterMinAmount] = useState('');
-  const [filterMaxAmount, setFilterMaxAmount] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showAddIncome, setShowAddIncome] = useState(false);
+  const [activeView, setActiveView] = useState('expenses');
+
+  // Expense table states
+  const [expenseSortField, setExpenseSortField] = useState('date');
+  const [expenseSortDirection, setExpenseSortDirection] = useState('desc');
+  const [expenseSearchQuery, setExpenseSearchQuery] = useState('');
+  const [expenseFilterCategory, setExpenseFilterCategory] = useState('');
+  const [expenseFilterDateFrom, setExpenseFilterDateFrom] = useState('');
+  const [expenseFilterDateTo, setExpenseFilterDateTo] = useState('');
+  const [expenseFilterMinAmount, setExpenseFilterMinAmount] = useState('');
+  const [expenseFilterMaxAmount, setExpenseFilterMaxAmount] = useState('');
+  const [expenseShowFilters, setExpenseShowFilters] = useState(false);
+
+  // Income table states
+  const [incomeSortField, setIncomeSortField] = useState('date');
+  const [incomeSortDirection, setIncomeSortDirection] = useState('desc');
+  const [incomeSearchQuery, setIncomeSearchQuery] = useState('');
+  const [incomeFilterCategory, setIncomeFilterCategory] = useState('');
+  const [incomeFilterDateFrom, setIncomeFilterDateFrom] = useState('');
+  const [incomeFilterDateTo, setIncomeFilterDateTo] = useState('');
+  const [incomeFilterMinAmount, setIncomeFilterMinAmount] = useState('');
+  const [incomeFilterMaxAmount, setIncomeFilterMaxAmount] = useState('');
+  const [incomeShowFilters, setIncomeShowFilters] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
     const loggedInUser = localStorage.getItem('user');
     if (!loggedInUser) {
       navigate('/auth');
       return;
     }
-
     try {
       setUser(JSON.parse(loggedInUser));
-      
-      // Load expenses from localStorage
       const savedExpenses = JSON.parse(localStorage.getItem('expenses') || '[]');
       setExpenses(savedExpenses);
+      const savedIncomes = JSON.parse(localStorage.getItem('incomes') || '[]');
+      setIncomes(savedIncomes);
     } catch (error) {
       console.error("Error loading user data:", error);
     } finally {
@@ -52,68 +64,68 @@ const Dashboard = () => {
     setShowAddExpense(true);
   };
 
-  const handleExpenseAdded = (newExpense) => {
-    setExpenses(prevExpenses => [...prevExpenses, newExpense]);
+  const handleAddIncome = () => {
+    setShowAddIncome(true);
   };
 
-  const resetFilters = () => {
-    setFilterCategory('');
-    setFilterDateFrom('');
-    setFilterDateTo('');
-    setFilterMinAmount('');
-    setFilterMaxAmount('');
-    setSearchQuery('');
+  const handleExpenseAdded = (newExpense) => {
+    setExpenses(prev => [...prev, newExpense]);
+  };
+
+  const handleIncomeAdded = (newIncome) => {
+    setIncomes(prev => [...prev, newIncome]);
+  };
+
+  const resetExpenseFilters = () => {
+    setExpenseFilterCategory('');
+    setExpenseFilterDateFrom('');
+    setExpenseFilterDateTo('');
+    setExpenseFilterMinAmount('');
+    setExpenseFilterMaxAmount('');
+    setExpenseSearchQuery('');
+  };
+
+  const resetIncomeFilters = () => {
+    setIncomeFilterCategory('');
+    setIncomeFilterDateFrom('');
+    setIncomeFilterDateTo('');
+    setIncomeFilterMinAmount('');
+    setIncomeFilterMaxAmount('');
+    setIncomeSearchQuery('');
   };
 
   const getFilteredAndSortedExpenses = () => {
-    // First apply filters
     let filtered = [...expenses];
-    
-    // Search query filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(expense => 
-        expense.description.toLowerCase().includes(query) || 
+    if (expenseSearchQuery) {
+      const query = expenseSearchQuery.toLowerCase();
+      filtered = filtered.filter(expense =>
+        expense.description.toLowerCase().includes(query) ||
         expense.category.toLowerCase().includes(query)
       );
     }
-    
-    // Category filter
-    if (filterCategory) {
-      filtered = filtered.filter(expense => expense.category === filterCategory);
+    if (expenseFilterCategory) {
+      filtered = filtered.filter(expense => expense.category === expenseFilterCategory);
     }
-    
-    // Date range filter
-    if (filterDateFrom) {
-      filtered = filtered.filter(expense => new Date(expense.date) >= new Date(filterDateFrom));
+    if (expenseFilterDateFrom) {
+      filtered = filtered.filter(expense => new Date(expense.date) >= new Date(expenseFilterDateFrom));
     }
-    
-    if (filterDateTo) {
-      filtered = filtered.filter(expense => new Date(expense.date) <= new Date(filterDateTo));
+    if (expenseFilterDateTo) {
+      filtered = filtered.filter(expense => new Date(expense.date) <= new Date(expenseFilterDateTo));
     }
-    
-    // Amount range filter
-    if (filterMinAmount) {
-      filtered = filtered.filter(expense => expense.amount >= parseFloat(filterMinAmount));
+    if (expenseFilterMinAmount) {
+      filtered = filtered.filter(expense => expense.amount >= parseFloat(expenseFilterMinAmount));
     }
-    
-    if (filterMaxAmount) {
-      filtered = filtered.filter(expense => expense.amount <= parseFloat(filterMaxAmount));
+    if (expenseFilterMaxAmount) {
+      filtered = filtered.filter(expense => expense.amount <= parseFloat(expenseFilterMaxAmount));
     }
-    
-    // Then sort
     return filtered.sort((a, b) => {
-      let valueA = a[sortField];
-      let valueB = b[sortField];
-      
-      // Handle special fields
-      if (sortField === 'date') {
+      let valueA = a[expenseSortField];
+      let valueB = b[expenseSortField];
+      if (expenseSortField === 'date') {
         valueA = new Date(valueA);
         valueB = new Date(valueB);
       }
-      
-      // Compare based on direction
-      if (sortDirection === 'asc') {
+      if (expenseSortDirection === 'asc') {
         return valueA > valueB ? 1 : -1;
       } else {
         return valueA < valueB ? 1 : -1;
@@ -121,59 +133,98 @@ const Dashboard = () => {
     });
   };
 
-  const handleSort = (field) => {
-    // If clicking the same field, toggle direction
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+  const getFilteredAndSortedIncomes = () => {
+    let filtered = [...incomes];
+    if (incomeSearchQuery) {
+      const query = incomeSearchQuery.toLowerCase();
+      filtered = filtered.filter(income =>
+        income.description.toLowerCase().includes(query) ||
+        income.category.toLowerCase().includes(query)
+      );
+    }
+    if (incomeFilterCategory) {
+      filtered = filtered.filter(income => income.category === incomeFilterCategory);
+    }
+    if (incomeFilterDateFrom) {
+      filtered = filtered.filter(income => new Date(income.date) >= new Date(incomeFilterDateFrom));
+    }
+    if (incomeFilterDateTo) {
+      filtered = filtered.filter(income => new Date(income.date) <= new Date(incomeFilterDateTo));
+    }
+    if (incomeFilterMinAmount) {
+      filtered = filtered.filter(income => income.amount >= parseFloat(incomeFilterMinAmount));
+    }
+    if (incomeFilterMaxAmount) {
+      filtered = filtered.filter(income => income.amount <= parseFloat(incomeFilterMaxAmount));
+    }
+    return filtered.sort((a, b) => {
+      let valueA = a[incomeSortField];
+      let valueB = b[incomeSortField];
+      if (incomeSortField === 'date') {
+        valueA = new Date(valueA);
+        valueB = new Date(valueB);
+      }
+      if (incomeSortDirection === 'asc') {
+        return valueA > valueB ? 1 : -1;
+      } else {
+        return valueA < valueB ? 1 : -1;
+      }
+    });
+  };
+
+  const handleExpenseSort = (field) => {
+    if (field === expenseSortField) {
+      setExpenseSortDirection(expenseSortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // If clicking a new field, set it and default to desc
-      setSortField(field);
-      setSortDirection('desc');
+      setExpenseSortField(field);
+      setExpenseSortDirection('desc');
     }
   };
 
-  const getSortIcon = (field) => {
-    if (sortField !== field) return null;
-    
-    return sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />;
+  const handleIncomeSort = (field) => {
+    if (field === incomeSortField) {
+      setIncomeSortDirection(incomeSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setIncomeSortField(field);
+      setIncomeSortDirection('desc');
+    }
   };
 
-  // Calculate summary statistics
+  const getExpenseSortIcon = (field) => {
+    if (expenseSortField !== field) return null;
+    return expenseSortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />;
+  };
+
+  const getIncomeSortIcon = (field) => {
+    if (incomeSortField !== field) return null;
+    return incomeSortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />;
+  };
+
   const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0);
-  
-  // Calculate category-based statistics for visualizations
+  const totalIncomes = incomes.reduce((sum, inc) => sum + inc.amount, 0);
+
   const categoryData = expenses.reduce((acc, expense) => {
     const category = expense.category || 'Uncategorized';
     if (!acc[category]) {
-      acc[category] = {
-        amount: 0,
-        count: 0
-      };
+      acc[category] = { amount: 0, count: 0 };
     }
     acc[category].amount += expense.amount;
     acc[category].count += 1;
     return acc;
   }, {});
-  
-  // Find most expensive category
+
   const mostExpensiveCategory = Object.entries(categoryData)
     .sort((a, b) => b[1].amount - a[1].amount)[0]?.[0] || 'None';
-  
-  // For date-based analysis (monthly spending)
+
   const monthlyData = expenses.reduce((acc, expense) => {
-    const month = expense.date.substring(0, 7); // Format: YYYY-MM
-    if (!acc[month]) {
-      acc[month] = 0;
-    }
+    const month = expense.date.substring(0, 7);
+    if (!acc[month]) acc[month] = 0;
     acc[month] += expense.amount;
     return acc;
   }, {});
-  
-  // Sort months chronologically
   const sortedMonths = Object.keys(monthlyData).sort();
-  
-  // Get unique categories for filter
-  const uniqueCategories = Array.from(new Set(expenses.map(expense => expense.category))).filter(Boolean);
+  const uniqueExpenseCategories = Array.from(new Set(expenses.map(expense => expense.category))).filter(Boolean);
+  const uniqueIncomeCategories = Array.from(new Set(incomes.map(income => income.category))).filter(Boolean);
 
   if (loading) {
     return (
@@ -199,7 +250,6 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
-        
         {/* Navigation Tabs */}
         <div className="border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -233,22 +283,18 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* User greeting */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900">Hello, {user?.name || 'User'}</h2>
           <p className="text-gray-600 mt-1">Welcome to your financial dashboard</p>
         </div>
 
         {activeView === 'expenses' ? (
-          /* EXPENSES VIEW */
           <>
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all hover:shadow-md">
                 <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider">Total Expenses</h3>
-                <p className="text-3xl mt-2 font-bold text-gray-900">
-                  ₹{totalExpenses.toFixed(2)}
-                </p>
+                <p className="text-3xl mt-2 font-bold text-gray-900">₹{totalExpenses.toFixed(2)}</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all hover:shadow-md">
                 <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider">Number of Expenses</h3>
@@ -258,38 +304,36 @@ const Dashboard = () => {
                 <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider">Top Category</h3>
                 <p className="text-3xl mt-2 font-bold text-gray-900">{mostExpensiveCategory}</p>
               </div>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all hover:shadow-md">
+                <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider">Total Income</h3>
+                <p className="text-3xl mt-2 font-bold text-gray-900">₹{totalIncomes.toFixed(2)}</p>
+              </div>
             </div>
 
-            {/* Expenses List */}
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+            {/* Expenses Table */}
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100 mb-8">
               <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h2 className="text-lg font-medium text-gray-900 flex-shrink-0">Expenses</h2>
-                
                 <div className="flex flex-wrap items-center gap-3">
-                  {/* Search */}
                   <div className="relative flex-grow max-w-xs">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Search size={16} className="text-gray-400" />
                     </div>
                     <input
                       type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      value={expenseSearchQuery}
+                      onChange={(e) => setExpenseSearchQuery(e.target.value)}
                       placeholder="Search expenses..."
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
-                  
-                  {/* Filter toggle */}
                   <button 
-                    onClick={() => setShowFilters(!showFilters)}
+                    onClick={() => setExpenseShowFilters(!expenseShowFilters)}
                     className="inline-flex items-center gap-1 px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                   >
                     <Filter size={16} />
-                    {showFilters ? 'Hide Filters' : 'Show Filters'}
+                    {expenseShowFilters ? 'Hide Filters' : 'Show Filters'}
                   </button>
-                  
-                  {/* Add Expense button */}
                   <button 
                     onClick={handleAddExpense}
                     className="inline-flex items-center gap-1 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm"
@@ -298,93 +342,83 @@ const Dashboard = () => {
                   </button>
                 </div>
               </div>
-              
-              {/* Filters */}
-              {showFilters && (
+              {expenseShowFilters && (
                 <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {/* Category filter */}
                     <div>
-                      <label htmlFor="filter-category" className="block text-xs font-medium text-gray-700 mb-1">
+                      <label htmlFor="expense-filter-category" className="block text-xs font-medium text-gray-700 mb-1">
                         Category
                       </label>
                       <select
-                        id="filter-category"
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
+                        id="expense-filter-category"
+                        value={expenseFilterCategory}
+                        onChange={(e) => setExpenseFilterCategory(e.target.value)}
                         className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       >
                         <option value="">All Categories</option>
-                        {uniqueCategories.map((category) => (
+                        {uniqueExpenseCategories.map((category) => (
                           <option key={category} value={category}>
                             {category}
                           </option>
                         ))}
                       </select>
                     </div>
-                    
-                    {/* Date range filters */}
                     <div>
-                      <label htmlFor="filter-date-from" className="block text-xs font-medium text-gray-700 mb-1">
+                      <label htmlFor="expense-filter-date-from" className="block text-xs font-medium text-gray-700 mb-1">
                         From Date
                       </label>
                       <input
                         type="date"
-                        id="filter-date-from"
-                        value={filterDateFrom}
-                        onChange={(e) => setFilterDateFrom(e.target.value)}
+                        id="expense-filter-date-from"
+                        value={expenseFilterDateFrom}
+                        onChange={(e) => setExpenseFilterDateFrom(e.target.value)}
                         className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
-                    
                     <div>
-                      <label htmlFor="filter-date-to" className="block text-xs font-medium text-gray-700 mb-1">
+                      <label htmlFor="expense-filter-date-to" className="block text-xs font-medium text-gray-700 mb-1">
                         To Date
                       </label>
                       <input
                         type="date"
-                        id="filter-date-to"
-                        value={filterDateTo}
-                        onChange={(e) => setFilterDateTo(e.target.value)}
+                        id="expense-filter-date-to"
+                        value={expenseFilterDateTo}
+                        onChange={(e) => setExpenseFilterDateTo(e.target.value)}
                         className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
-                    
-                    {/* Amount range filters */}
                     <div>
-                      <label htmlFor="filter-min-amount" className="block text-xs font-medium text-gray-700 mb-1">
+                      <label htmlFor="expense-filter-min-amount" className="block text-xs font-medium text-gray-700 mb-1">
                         Min Amount (₹)
                       </label>
                       <input
                         type="number"
-                        id="filter-min-amount"
-                        value={filterMinAmount}
-                        onChange={(e) => setFilterMinAmount(e.target.value)}
+                        id="expense-filter-min-amount"
+                        value={expenseFilterMinAmount}
+                        onChange={(e) => setExpenseFilterMinAmount(e.target.value)}
                         min="0"
                         step="0.01"
                         className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
-                    
                     <div>
-                      <label htmlFor="filter-max-amount" className="block text-xs font-medium text-gray-700 mb-1">
+                      <label htmlFor="expense-filter-max-amount" className="block text-xs font-medium text-gray-700 mb-1">
                         Max Amount (₹)
                       </label>
                       <input
                         type="number"
-                        id="filter-max-amount"
-                        value={filterMaxAmount}
-                        onChange={(e) => setFilterMaxAmount(e.target.value)}
+                        id="expense-filter-max-amount"
+                        value={expenseFilterMaxAmount}
+                        onChange={(e) => setExpenseFilterMaxAmount(e.target.value)}
                         min="0"
                         step="0.01"
                         className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
                   </div>
-                  
                   <div className="mt-4 flex justify-end">
                     <button
-                      onClick={resetFilters}
+                      onClick={resetExpenseFilters}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                     >
                       Reset Filters
@@ -392,7 +426,6 @@ const Dashboard = () => {
                   </div>
                 </div>
               )}
-              
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -400,48 +433,48 @@ const Dashboard = () => {
                       <th 
                         scope="col" 
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                        onClick={() => handleSort('description')}
+                        onClick={() => handleExpenseSort('description')}
                       >
                         <div className="flex items-center gap-1">
                           Description
                           <span className="text-gray-400 group-hover:text-gray-500">
-                            {getSortIcon('description')}
+                            {getExpenseSortIcon('description')}
                           </span>
                         </div>
                       </th>
                       <th 
                         scope="col" 
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                        onClick={() => handleSort('category')}
+                        onClick={() => handleExpenseSort('category')}
                       >
                         <div className="flex items-center gap-1">
                           Category
                           <span className="text-gray-400 group-hover:text-gray-500">
-                            {getSortIcon('category')}
+                            {getExpenseSortIcon('category')}
                           </span>
                         </div>
                       </th>
                       <th 
                         scope="col" 
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                        onClick={() => handleSort('date')}
+                        onClick={() => handleExpenseSort('date')}
                       >
                         <div className="flex items-center gap-1">
                           Date
                           <span className="text-gray-400 group-hover:text-gray-500">
-                            {getSortIcon('date')}
+                            {getExpenseSortIcon('date')}
                           </span>
                         </div>
                       </th>
                       <th 
                         scope="col" 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                        onClick={() => handleSort('amount')}
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleExpenseSort('amount')}
                       >
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-end gap-1">
                           Amount
                           <span className="text-gray-400 group-hover:text-gray-500">
-                            {getSortIcon('amount')}
+                            {getExpenseSortIcon('amount')}
                           </span>
                         </div>
                       </th>
@@ -449,7 +482,7 @@ const Dashboard = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {getFilteredAndSortedExpenses().length > 0 ? (
-                      getFilteredAndSortedExpenses().map((expense) => (
+                      getFilteredAndSortedExpenses().map(expense => (
                         <tr key={expense.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{expense.description}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -458,7 +491,9 @@ const Dashboard = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{expense.date}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹{expense.amount.toFixed(2)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                            ₹{expense.amount.toFixed(2)}
+                          </td>
                         </tr>
                       ))
                     ) : (
@@ -471,25 +506,224 @@ const Dashboard = () => {
                   </tbody>
                 </table>
               </div>
-              
               {getFilteredAndSortedExpenses().length > 0 && (
                 <div className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Showing {getFilteredAndSortedExpenses().length} of {expenses.length} expenses
                 </div>
               )}
             </div>
+
+            {/* Income Table (Dashboard View) */}
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <h2 className="text-lg font-medium text-gray-900 flex-shrink-0">Incomes</h2>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative flex-grow max-w-xs">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search size={16} className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={incomeSearchQuery}
+                      onChange={(e) => setIncomeSearchQuery(e.target.value)}
+                      placeholder="Search incomes..."
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <button 
+                    onClick={() => setIncomeShowFilters(!incomeShowFilters)}
+                    className="inline-flex items-center gap-1 px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <Filter size={16} />
+                    {incomeShowFilters ? 'Hide Filters' : 'Show Filters'}
+                  </button>
+                  <button 
+                    onClick={handleAddIncome}
+                    className="inline-flex items-center gap-1 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 shadow-sm"
+                  >
+                    <Plus size={16} /> Add Income
+                  </button>
+                </div>
+              </div>
+              {incomeShowFilters && (
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                      <label htmlFor="income-filter-category" className="block text-xs font-medium text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <select
+                        id="income-filter-category"
+                        value={incomeFilterCategory}
+                        onChange={(e) => setIncomeFilterCategory(e.target.value)}
+                        className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      >
+                        <option value="">All Categories</option>
+                        {uniqueIncomeCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="income-filter-date-from" className="block text-xs font-medium text-gray-700 mb-1">
+                        From Date
+                      </label>
+                      <input
+                        type="date"
+                        id="income-filter-date-from"
+                        value={incomeFilterDateFrom}
+                        onChange={(e) => setIncomeFilterDateFrom(e.target.value)}
+                        className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="income-filter-date-to" className="block text-xs font-medium text-gray-700 mb-1">
+                        To Date
+                      </label>
+                      <input
+                        type="date"
+                        id="income-filter-date-to"
+                        value={incomeFilterDateTo}
+                        onChange={(e) => setIncomeFilterDateTo(e.target.value)}
+                        className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="income-filter-min-amount" className="block text-xs font-medium text-gray-700 mb-1">
+                        Min Amount (₹)
+                      </label>
+                      <input
+                        type="number"
+                        id="income-filter-min-amount"
+                        value={incomeFilterMinAmount}
+                        onChange={(e) => setIncomeFilterMinAmount(e.target.value)}
+                        min="0"
+                        step="0.01"
+                        className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="income-filter-max-amount" className="block text-xs font-medium text-gray-700 mb-1">
+                        Max Amount (₹)
+                      </label>
+                      <input
+                        type="number"
+                        id="income-filter-max-amount"
+                        value={incomeFilterMaxAmount}
+                        onChange={(e) => setIncomeFilterMaxAmount(e.target.value)}
+                        min="0"
+                        step="0.01"
+                        className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={resetIncomeFilters}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Reset Filters
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleIncomeSort('description')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Description
+                          <span className="text-gray-400 group-hover:text-gray-500">
+                            {getIncomeSortIcon('description')}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleIncomeSort('category')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Category
+                          <span className="text-gray-400 group-hover:text-gray-500">
+                            {getIncomeSortIcon('category')}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleIncomeSort('date')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Date
+                          <span className="text-gray-400 group-hover:text-gray-500">
+                            {getIncomeSortIcon('date')}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleIncomeSort('amount')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Amount
+                          <span className="text-gray-400 group-hover:text-gray-500">
+                            {getIncomeSortIcon('amount')}
+                          </span>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {getFilteredAndSortedIncomes().length > 0 ? (
+                      getFilteredAndSortedIncomes().map(income => (
+                        <tr key={income.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{income.description}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {income.category}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{income.date}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-green-600 text-right">
+                            ₹{income.amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                          No incomes found. Add your first income to get started!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {getFilteredAndSortedIncomes().length > 0 && (
+                <div className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Showing {getFilteredAndSortedIncomes().length} of {incomes.length} incomes
+                </div>
+              )}
+            </div>
           </>
         ) : (
-          /* VISUALIZATIONS VIEW */
           <>
+            {/* Visualizations */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Category Summary */}
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Expense by Category</h3>
-                
-                {/* Simple visualization of the pie chart */}
                 <div className="h-60 flex items-center justify-center mb-4">
-                  {/* Placeholder for a pie chart - in a real app, you'd use a chart library like Chart.js or Recharts */}
                   <div className="relative w-40 h-40 rounded-full overflow-hidden">
                     {Object.entries(categoryData).map(([category, data], index, array) => {
                       const percentage = (data.amount / totalExpenses) * 100;
@@ -510,8 +744,6 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-                
-                {/* Category breakdown */}
                 <div className="space-y-3">
                   {Object.entries(categoryData)
                     .sort((a, b) => b[1].amount - a[1].amount)
@@ -521,10 +753,7 @@ const Dashboard = () => {
                       return (
                         <div key={category} className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <span
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: randomColor }}
-                            />
+                            <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: randomColor }} />
                             <span className="text-sm font-medium text-gray-700">{category}</span>
                           </div>
                           <div className="text-sm text-gray-900">
@@ -533,23 +762,17 @@ const Dashboard = () => {
                           </div>
                         </div>
                       );
-                    })
-                  }
+                    })}
                 </div>
               </div>
-              
               {/* Monthly Spending Trends */}
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Spending Trends</h3>
-                
-                {/* Bar chart visualization */}
                 <div className="h-60 flex items-end space-x-2 mb-4">
                   {sortedMonths.map((month, index) => {
                     const amount = monthlyData[month];
-                    // Find the max value to scale properly
                     const maxValue = Math.max(...Object.values(monthlyData));
                     const height = maxValue > 0 ? (amount / maxValue) * 100 : 0;
-                    
                     return (
                       <div key={month} className="flex-1 flex flex-col items-center group">
                         <div className="w-full relative">
@@ -568,7 +791,6 @@ const Dashboard = () => {
                     );
                   })}
                 </div>
-                
                 <h4 className="font-medium text-gray-700 mt-8 mb-3">Monthly Summary</h4>
                 <div className="space-y-3">
                   {sortedMonths.slice(-3).map(month => (
@@ -580,7 +802,6 @@ const Dashboard = () => {
                     </div>
                   ))}
                 </div>
-                
                 <div className="mt-6 text-sm text-gray-500">
                   {sortedMonths.length > 0 ? (
                     <p>
@@ -594,21 +815,16 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-              
               {/* Additional Stats */}
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Spending Insights</h3>
-                
                 <div className="space-y-6">
-                  {/* Average expense */}
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Average Expense</h4>
                     <p className="mt-1 text-3xl font-semibold text-gray-900">
                       ₹{expenses.length ? (totalExpenses / expenses.length).toFixed(2) : '0.00'}
                     </p>
                   </div>
-                  
-                  {/* Highest expense */}
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Highest Expense</h4>
                     {expenses.length > 0 ? (
@@ -624,8 +840,6 @@ const Dashboard = () => {
                       <p className="mt-1 text-3xl font-semibold text-gray-900">₹0.00</p>
                     )}
                   </div>
-                  
-                  {/* Recent activity */}
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Recent Activity</h4>
                     <div className="mt-2 space-y-2">
@@ -639,13 +853,10 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              
-              {/* Spending Patterns */}
+              {/* Category Analysis */}
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Category Analysis</h3>
-                
                 <div className="space-y-4">
-                  {/* Category with most transactions */}
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Most Frequent Category</h4>
                     {Object.entries(categoryData).length > 0 ? (
@@ -661,15 +872,12 @@ const Dashboard = () => {
                       <p className="mt-1 text-gray-700">No data available</p>
                     )}
                   </div>
-                  
-                  {/* Category distribution visualization (horizontal bars) */}
                   <div className="mt-6">
                     <h4 className="text-sm font-medium text-gray-500 mb-3">Category Distribution</h4>
-                    
                     <div className="space-y-3">
                       {Object.entries(categoryData)
                         .sort((a, b) => b[1].amount - a[1].amount)
-                        .slice(0, 5) // Show top 5
+                        .slice(0, 5)
                         .map(([category, data], index) => {
                           const percentage = (data.amount / totalExpenses) * 100;
                           return (
@@ -689,8 +897,6 @@ const Dashboard = () => {
                         })}
                     </div>
                   </div>
-                  
-                  {/* Expense frequency */}
                   <div className="mt-6">
                     <h4 className="text-sm font-medium text-gray-500 mb-2">Spending Frequency</h4>
                     <p className="text-sm text-gray-700">
@@ -700,27 +906,228 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-            
-            {/* Export button */}
             <div className="flex justify-end">
               <button className="inline-flex items-center gap-1 px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 shadow-sm">
                 <Download size={16} />
                 Export Data
               </button>
             </div>
+
+            {/* Income Table (Analytics View) */}
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100 mt-8">
+              <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <h2 className="text-lg font-medium text-gray-900 flex-shrink-0">Incomes</h2>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative flex-grow max-w-xs">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search size={16} className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={incomeSearchQuery}
+                      onChange={(e) => setIncomeSearchQuery(e.target.value)}
+                      placeholder="Search incomes..."
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <button 
+                    onClick={() => setIncomeShowFilters(!incomeShowFilters)}
+                    className="inline-flex items-center gap-1 px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <Filter size={16} />
+                    {incomeShowFilters ? 'Hide Filters' : 'Show Filters'}
+                  </button>
+                  <button 
+                    onClick={handleAddIncome}
+                    className="inline-flex items-center gap-1 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 shadow-sm"
+                  >
+                    <Plus size={16} /> Add Income
+                  </button>
+                </div>
+              </div>
+              {incomeShowFilters && (
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                      <label htmlFor="income2-filter-category" className="block text-xs font-medium text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <select
+                        id="income2-filter-category"
+                        value={incomeFilterCategory}
+                        onChange={(e) => setIncomeFilterCategory(e.target.value)}
+                        className="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      >
+                        <option value="">All Categories</option>
+                        {uniqueIncomeCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="income2-filter-date-from" className="block text-xs font-medium text-gray-700 mb-1">
+                        From Date
+                      </label>
+                      <input
+                        type="date"
+                        id="income2-filter-date-from"
+                        value={incomeFilterDateFrom}
+                        onChange={(e) => setIncomeFilterDateFrom(e.target.value)}
+                        className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="income2-filter-date-to" className="block text-xs font-medium text-gray-700 mb-1">
+                        To Date
+                      </label>
+                      <input
+                        type="date"
+                        id="income2-filter-date-to"
+                        value={incomeFilterDateTo}
+                        onChange={(e) => setIncomeFilterDateTo(e.target.value)}
+                        className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="income2-filter-min-amount" className="block text-xs font-medium text-gray-700 mb-1">
+                        Min Amount (₹)
+                      </label>
+                      <input
+                        type="number"
+                        id="income2-filter-min-amount"
+                        value={incomeFilterMinAmount}
+                        onChange={(e) => setIncomeFilterMinAmount(e.target.value)}
+                        min="0"
+                        step="0.01"
+                        className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="income2-filter-max-amount" className="block text-xs font-medium text-gray-700 mb-1">
+                        Max Amount (₹)
+                      </label>
+                      <input
+                        type="number"
+                        id="income2-filter-max-amount"
+                        value={incomeFilterMaxAmount}
+                        onChange={(e) => setIncomeFilterMaxAmount(e.target.value)}
+                        min="0"
+                        step="0.01"
+                        className="block w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={resetIncomeFilters}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Reset Filters
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleIncomeSort('description')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Description
+                          <span className="text-gray-400 group-hover:text-gray-500">
+                            {getIncomeSortIcon('description')}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleIncomeSort('category')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Category
+                          <span className="text-gray-400 group-hover:text-gray-500">
+                            {getIncomeSortIcon('category')}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleIncomeSort('date')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Date
+                          <span className="text-gray-400 group-hover:text-gray-500">
+                            {getIncomeSortIcon('date')}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                        onClick={() => handleIncomeSort('amount')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Amount
+                          <span className="text-gray-400 group-hover:text-gray-500">
+                            {getIncomeSortIcon('amount')}
+                          </span>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {getFilteredAndSortedIncomes().length > 0 ? (
+                      getFilteredAndSortedIncomes().map(income => (
+                        <tr key={income.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{income.description}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {income.category}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{income.date}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-green-600 text-right">
+                            ₹{income.amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                          No incomes found. Add your first income to get started!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {getFilteredAndSortedIncomes().length > 0 && (
+                <div className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Showing {getFilteredAndSortedIncomes().length} of {incomes.length} incomes
+                </div>
+              )}
+            </div>
           </>
         )}
       </main>
 
-      {/* Add Expense Modal */}
+      {/* Modals */}
       {showAddExpense && (
-        <AddExpenseForm 
-          onClose={() => setShowAddExpense(false)} 
-          onAddExpense={handleExpenseAdded} 
-        />
+        <AddExpenseForm onClose={() => setShowAddExpense(false)} onAddExpense={handleExpenseAdded} />
+      )}
+      {showAddIncome && (
+        <AddIncomeForm onClose={() => setShowAddIncome(false)} onAddIncome={handleIncomeAdded} />
       )}
     </div>
   );
 };
 
-export default Dashboard; 
+export default Dashboard;
