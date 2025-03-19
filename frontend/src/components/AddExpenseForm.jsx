@@ -1,3 +1,4 @@
+// src/components/AddExpenseForm.jsx
 import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
 
@@ -29,15 +30,12 @@ const AddExpenseForm = ({ onClose, onAddExpense }) => {
     if (!description.trim()) {
       newErrors.description = 'Description is required';
     }
-    
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       newErrors.amount = 'Please enter a valid amount greater than 0';
     }
-    
     if (!category) {
       newErrors.category = 'Please select a category';
     }
-    
     if (!date) {
       newErrors.date = 'Date is required';
     }
@@ -56,39 +54,31 @@ const AddExpenseForm = ({ onClose, onAddExpense }) => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Create expense object
-      const newExpense = {
-        id: Date.now().toString(),
+      const token = localStorage.getItem('token');
+      const expenseData = {
         description: description.trim(),
         amount: parseFloat(amount),
         category,
         date,
-        createdAt: new Date().toISOString()
       };
-      
-      // Get existing expenses from localStorage or empty array
-      const existingExpenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-      
-      // Add new expense
-      existingExpenses.push(newExpense);
-      
-      // Save to localStorage
-      localStorage.setItem('expenses', JSON.stringify(existingExpenses));
-      
-      // Call parent callback
-      onAddExpense(newExpense);
-      
-      // Reset form
+      const response = await fetch('http://localhost:5001/api/expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(expenseData),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Error adding expense');
+      }
+      onAddExpense(data);
       setDescription('');
       setAmount('');
       setCategory('');
       setDate(new Date().toISOString().slice(0, 10));
       setErrors({});
-      
-      // Close form
       onClose();
     } catch (error) {
       console.error('Error adding expense:', error);
@@ -238,4 +228,4 @@ const AddExpenseForm = ({ onClose, onAddExpense }) => {
   );
 };
 
-export default AddExpenseForm; 
+export default AddExpenseForm;

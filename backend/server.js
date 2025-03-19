@@ -22,5 +22,11 @@ db.once('open', () => console.log("MongoDB connection established (event)."));
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
-const PORT = process.env.PORT || 5000;
+const expenseRoutes = require('./routes/expenses');
+app.use('/api/expenses', expenseRoutes);
+
+const incomeRoutes = require('./routes/incomes');
+app.use('/api/incomes', incomeRoutes);
+
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

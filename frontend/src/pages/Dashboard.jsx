@@ -38,25 +38,31 @@ const Dashboard = () => {
 
   useEffect(() => {
     const loggedInUser = localStorage.getItem('user');
-    if (!loggedInUser) {
+    const token = localStorage.getItem('token');
+    if (!loggedInUser || !token) {
       navigate('/auth');
       return;
     }
-    try {
-      setUser(JSON.parse(loggedInUser));
-      const savedExpenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-      setExpenses(savedExpenses);
-      const savedIncomes = JSON.parse(localStorage.getItem('incomes') || '[]');
-      setIncomes(savedIncomes);
-    } catch (error) {
-      console.error("Error loading user data:", error);
-    } finally {
-      setLoading(false);
-    }
+    setUser(JSON.parse(loggedInUser));
+    Promise.all([
+      fetch('http://localhost:5001/api/expenses', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(res => res.json()),
+      fetch('http://localhost:5001/api/incomes', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(res => res.json())
+    ])
+      .then(([expensesData, incomesData]) => {
+        setExpenses(expensesData);
+        setIncomes(incomesData);
+      })
+      .catch(error => console.error("Error fetching data:", error))
+      .finally(() => setLoading(false));
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     navigate('/');
   };
 
@@ -1121,10 +1127,10 @@ const Dashboard = () => {
 
       {/* Modals */}
       {showAddExpense && (
-        <AddExpenseForm onClose={() => setShowAddExpense(false)} onAddExpense={handleExpenseAdded} />
+        <AddExpenseForm onClose={() => setShowAddExpense(false)} onAddExpense={(newExpense) => setExpenses(prev => [...prev, newExpense])} />
       )}
       {showAddIncome && (
-        <AddIncomeForm onClose={() => setShowAddIncome(false)} onAddIncome={handleIncomeAdded} />
+        <AddIncomeForm onClose={() => setShowAddIncome(false)} onAddIncome={(newIncome) => setIncomes(prev => [...prev, newIncome])} />
       )}
     </div>
   );

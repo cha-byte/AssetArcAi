@@ -1,3 +1,4 @@
+// src/components/AddIncomeForm.jsx
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
@@ -26,15 +27,12 @@ const AddIncomeForm = ({ onClose, onAddIncome }) => {
     if (!description.trim()) {
       newErrors.description = 'Description is required';
     }
-    
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       newErrors.amount = 'Please enter a valid amount greater than 0';
     }
-    
     if (!category) {
       newErrors.category = 'Please select a category';
     }
-    
     if (!date) {
       newErrors.date = 'Date is required';
     }
@@ -53,39 +51,31 @@ const AddIncomeForm = ({ onClose, onAddIncome }) => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Create income object
-      const newIncome = {
-        id: Date.now().toString(),
+      const token = localStorage.getItem('token');
+      const incomeData = {
         description: description.trim(),
         amount: parseFloat(amount),
         category,
         date,
-        createdAt: new Date().toISOString()
       };
-      
-      // Get existing incomes from localStorage or empty array
-      const existingIncomes = JSON.parse(localStorage.getItem('incomes') || '[]');
-      
-      // Add new income
-      existingIncomes.push(newIncome);
-      
-      // Save to localStorage
-      localStorage.setItem('incomes', JSON.stringify(existingIncomes));
-      
-      // Call parent callback
-      onAddIncome(newIncome);
-      
-      // Reset form
+      const response = await fetch('http://localhost:5001/api/incomes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(incomeData),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Error adding income');
+      }
+      onAddIncome(data);
       setDescription('');
       setAmount('');
       setCategory('');
       setDate(new Date().toISOString().slice(0, 10));
       setErrors({});
-      
-      // Close form
       onClose();
     } catch (error) {
       console.error('Error adding income:', error);
